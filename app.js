@@ -1,6 +1,10 @@
+const debug = require('debug')('app:inicio');
+//const dbDebug = require('debug')('app:db')
 const express = require('express');
+const config = require('config');
+//const logger = require('./logger')
+const morgan = require('morgan');
 const Joi = require('@hapi/joi');
-const { send } = require('express/lib/response');
 const app = express();
 
 const usuarios = [
@@ -9,7 +13,23 @@ const usuarios = [
     {id:3, nombre:'German'},
 ]
 
-app.use(express.json());
+app.use(express.json());//body
+app.use(express.urlencoded({ extended:true }));
+app.use(express.static('public'));
+//app.use(logger);
+
+//Configuracion de entorno
+console.log('Aplicacion: ' + config.get('nombre'));
+console.log('DB server: ' + config.get('configDB.host'));
+
+//Uso de un middleware de un 3ero - Morgan
+if(app.get('env') === 'development'){
+    app.use(morgan('tiny'));
+    debug('Morgan esta habilitado');
+}
+
+//Trabajos con base de datos
+debug('Conectando con la base de datos')
 
 app.get('/',(req, res) => {
     res.send('Hola Mundo desde Express');
@@ -26,7 +46,12 @@ app.get('/api/usuarios/:id',(req,res) => {
 })
 
 app.post('/api/usuarios', (req,res) => {
-    const schema = Joi.object({
+    let body = req.body;
+    console.log(body.nombre);
+    res.json({
+        body,
+    })
+    /* const schema = Joi.object({
         nombre: Joi.string().min(3).required()
     });
     const {error, value} = validarUsuario(req.body.nombre)
@@ -40,7 +65,7 @@ app.post('/api/usuarios', (req,res) => {
     }else{
         const mensaje = error.details[0].message;
         res.status(400).send(mensaje);
-    }
+    } */
 });
 
 app.put('/api/usuarios/:id', (req,res) => {
